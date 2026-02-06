@@ -2,7 +2,7 @@ module github.com/skypbc/adata
 
 go 1.24.4
 
-require github.com/skypbc/goutils v0.1.0
+require github.com/skypbc/goutils v0.1.5
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
