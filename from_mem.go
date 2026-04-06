@@ -60,17 +60,16 @@ func (d *dataFromMem) Seek(offset int64, whence int) (ret int64, err error) {
 	switch whence {
 	case io.SeekStart:
 		d.offset = offset
-		return offset, nil
 	case io.SeekEnd:
-		ret = int64(len(d.data) - int(offset))
-		return ret, nil
+		d.offset = int64(len(d.data) - int(offset))
 	case io.SeekCurrent:
 		d.offset = d.offset + offset
-		return d.offset, nil
+	default:
+		return 0, gerrors.NewIncorrectParamsError().
+			SetTemplate(`invalid whence: "{whence}"`).
+			AddInt("whence", whence)
 	}
-	return 0, gerrors.NewIncorrectParamsError().
-		SetTemplate(`invalid whence: "{whence}"`).
-		AddInt("whence", whence)
+	return d.offset, nil
 }
 
 func (d *dataFromMem) Tell() (offset int64, err error) {

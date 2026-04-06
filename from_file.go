@@ -100,7 +100,7 @@ func (d *dataFromFile) Seek(offset int64, whence int) (ret int64, err error) {
 		return 0, gerrors.NewUnknownError().
 			SetTemplate("data isn't initialized")
 	}
-	return d.fd.Seek(offset, io.SeekStart)
+	return d.fd.Seek(offset, whence)
 }
 
 func (d *dataFromFile) Tell() (int64, error) {
