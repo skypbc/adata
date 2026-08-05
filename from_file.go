@@ -45,17 +45,12 @@ func (d *dataFromFile) IsOpen() bool {
 }
 
 func (d *dataFromFile) Read(buff []byte) (size int, err error) {
-	n, err := d.Read64(buff)
-	return int(n), err
-}
-
-func (d *dataFromFile) Read64(buff []byte) (size int64, err error) {
 	if d.fd == nil {
 		return 0, gerrors.NewUnknownError().
 			SetTemplate("data isn't initialized")
 	}
 	s, e := d.fd.Read(buff)
-	return int64(s), e
+	return s, e
 }
 
 func (d *dataFromFile) ReadAll() (data []byte, err error) {

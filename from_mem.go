@@ -1,9 +1,11 @@
 package adata
 
 import (
+	"io"
+	"math"
+
 	"github.com/skypbc/goutils/gerrors"
 	"github.com/skypbc/goutils/gslice"
-	"io"
 )
 
 func NewDataFromMem(data []byte) IDataFromMem {
@@ -15,7 +17,7 @@ func NewDataFromMem(data []byte) IDataFromMem {
 
 type dataFromMem struct {
 	data   []byte
-	offset int64
+	offset int
 }
 
 func (d *dataFromMem) Path() string {
@@ -23,22 +25,12 @@ func (d *dataFromMem) Path() string {
 }
 
 func (d *dataFromMem) Read(buff []byte) (size int, err error) {
-	n, err := d.Read64(buff)
-	return int(n), err
-}
-
-func (d *dataFromMem) Read64(buff []byte) (size int64, err error) {
-	ds := int64(len(d.data))
+	ds := len(d.data)
 	if d.offset >= ds {
-		return size, io.EOF
+		return 0, io.EOF
 	}
 
-	size = int64(len(d.data[d.offset:]))
-	if int64(len(buff)) < size {
-		size = int64(len(buff))
-	}
-
-	copy(buff, d.data[d.offset:])
+	size = copy(buff, d.data[d.offset:])
 	d.offset += size
 
 	if d.offset >= ds {
@@ -56,24 +48,57 @@ func (d *dataFromMem) Raw() []byte {
 	return d.data
 }
 
-func (d *dataFromMem) Seek(offset int64, whence int) (ret int64, err error) {
+func (d *dataFromMem) Seek(offset int64, whence int) (int64, error) {
+	var base int64
+
 	switch whence {
 	case io.SeekStart:
-		d.offset = offset
-	case io.SeekEnd:
-		d.offset = int64(len(d.data) - int(offset))
+		base = 0
+
 	case io.SeekCurrent:
-		d.offset = d.offset + offset
+		base = int64(d.offset)
+
+	case io.SeekEnd:
+		base = int64(len(d.data))
+
 	default:
 		return 0, gerrors.NewIncorrectParamsError().
 			SetTemplate(`invalid whence: "{whence}"`).
 			AddInt("whence", whence)
 	}
-	return d.offset, nil
+
+	// Проверяем переполнение при сложении
+	if offset > 0 && base > math.MaxInt64-offset {
+		return 0, gerrors.NewIncorrectParamsError().
+			SetTemplate("seek position overflow")
+	}
+	if offset < 0 && base < math.MinInt64-offset {
+		return 0, gerrors.NewIncorrectParamsError().
+			SetTemplate("seek position overflow")
+	}
+
+	position := base + offset
+
+	// Позиция перед началом данных недопустима.
+	if position < 0 {
+		return 0, gerrors.NewIncorrectParamsError().
+			SetTemplate(`negative seek position: "{position}"`).
+			AddInt64("position", position)
+	}
+
+	// Проверяем, что значение помещается в int.
+	if uint64(position) > uint64(^uint(0)>>1) {
+		return 0, gerrors.NewIncorrectParamsError().
+			SetTemplate("seek position does not fit into int")
+	}
+
+	d.offset = int(position)
+
+	return position, nil
 }
 
 func (d *dataFromMem) Tell() (offset int64, err error) {
-	return d.offset, nil
+	return int64(d.offset), nil
 }
 
 func (d *dataFromMem) Size() (size int64, err error) {
