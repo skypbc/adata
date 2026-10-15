@@ -3,7 +3,6 @@ package adata
 
 type IData interface {
 	Read(buff []byte) (size int, err error)
-	ReadAll() (data []byte, err error)
 
 	// Метод из IDataFromFile (добавлен в общий интерфейс для удобства). Его отсутствие производит много
 	// однотипного кода (приведений) для доступа к нему.

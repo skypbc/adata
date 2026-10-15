@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/skypbc/goutils/gerrors"
-	"github.com/skypbc/goutils/gslice"
 )
 
 func NewDataFromMem(data []byte) IDataFromMem {
@@ -38,10 +37,6 @@ func (d *dataFromMem) Read(buff []byte) (size int, err error) {
 		return size, io.EOF
 	}
 	return size, nil
-}
-
-func (d *dataFromMem) ReadAll() (data []byte, err error) {
-	return gslice.Clone(d.data), nil
 }
 
 func (d *dataFromMem) Raw() []byte {

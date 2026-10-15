@@ -53,25 +53,6 @@ func (d *dataFromFile) Read(buff []byte) (size int, err error) {
 	return s, e
 }
 
-func (d *dataFromFile) ReadAll() (data []byte, err error) {
-	if d.fd == nil {
-		if err = d.Open(); err != nil {
-			return nil, gerrors.Wrap(err)
-		}
-		defer d.Close()
-	}
-	size, err := d.Size()
-	if err != nil {
-		return nil, err
-	}
-	data = make([]byte, size)
-	n, err := io.ReadFull(d.fd, data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], err
-}
-
 func (d *dataFromFile) Path() string {
 	return d.filepath
 }
